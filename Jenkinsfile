@@ -15,7 +15,8 @@ pipeline {
             stages {
                 stage('Repositorio') {
                     steps {
-                        git branch:'main',url:'https://github.com/AlexRomero10/prueba_icdc.git'
+                        git branch:'main', url:'https://github.com/AlexRomero10/prueba_icdc.git'
+
                     }
                 }
                 stage('Requirements') {
