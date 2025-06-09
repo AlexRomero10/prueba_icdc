@@ -1,7 +1,8 @@
 pipeline {
     environment {
-        IMAGEN = "aleromero/jenkins:v1"
-        LOGIN = 'DOCKER_HUB_IVANR'
+        IMAGEN = "aleromero/jenkins"
+        TAG = "v1"
+        LOGIN = 'DOCKER_HUB_ALEJANDRO'
     }
     agent any
     stages {
@@ -15,8 +16,7 @@ pipeline {
             stages {
                 stage('Repositorio') {
                     steps {
-                        git branch:'main', url:'https://github.com/AlexRomero10/prueba_icdc.git'
-
+                        git branch: 'main', url: 'https://github.com/AlexRomero10/prueba_icdc.git'
                     }
                 }
                 stage('Requirements') {
@@ -24,13 +24,11 @@ pipeline {
                         sh 'pip install -r app/requirements.txt'
                     }
                 }
-                stage('Test')
-                {
+                stage('Test') {
                     steps {
                         sh 'cd app && pytest test_app.py'
                     }
                 }
-
             }
         }
         stage("Gen_imagen") {
@@ -39,46 +37,47 @@ pipeline {
                 stage('build') {
                     steps {
                         script {
-                            newApp = docker.build "$IMAGEN:latest"
+                            newApp = docker.build("${IMAGEN}:${TAG}")
                         }
                     }
                 }
                 stage('Subir') {
                     steps {
                         script {
-                            docker.withRegistry( '', LOGIN ) {
-                                newApp.push()
+                            docker.withRegistry('', LOGIN) {
+                                newApp.push("${TAG}")
                             }
                         }
                     }
                 }
                 stage('Borrar') {
                     steps {
-                        sh "docker rmi $IMAGEN:latest"
+                        sh "docker rmi ${IMAGEN}:${TAG}"
                     }
                 }
             }
         }
         stage('VPS') {
-        agent any
-        steps {
-            sshagent(credentials: ['SSH']) {
-                sh '''
-                ssh -o StrictHostKeyChecking=no alejandro@art <<EOF
-                    cd ~/prueba_icdc || exit
-                    docker-compose down
-                    docker rmi -f aleromero/jenkins:v1
-                    docker-compose up -d --force-recreate
-                '''
+            agent any
+            steps {
+                sshagent(credentials: ['SSH']) {
+                    sh '''
+                    ssh -o StrictHostKeyChecking=no alejandro@art <<EOF
+                        cd ~/prueba_icdc || exit
+                        docker-compose down
+                        docker rmi -f aleromero/jenkins:v1
+                        docker-compose up -d --force-recreate
+                    EOF
+                    '''
+                }
             }
         }
-    }
     }
     post {
         always {
             mail to: 'aletromp00@gmail.com',
             subject: "Pipeline IC: ${currentBuild.fullDisplayName}",
-            body: "${env.BUILD_URL} has result ${currentBuild.result}. Si ha tenido exito, se ha creado y subido la imagen $IMAGEN:latest."
+            body: "${env.BUILD_URL} has result ${currentBuild.result}. Si ha tenido exito, se ha creado y subido la imagen ${IMAGEN}:${TAG}."
         }
     }
 }
