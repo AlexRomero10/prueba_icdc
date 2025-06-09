@@ -1,10 +1,12 @@
 pipeline {
+    agent any
+
     environment {
         IMAGEN = "aleromero/jenkins"
         TAG = "v1"
         LOGIN = 'DOCKER_HUB_ALEJANDRO'
     }
-    agent any
+
     stages {
         stage("Bajar_imagen") {
             agent {
@@ -31,6 +33,7 @@ pipeline {
                 }
             }
         }
+
         stage("Gen_imagen") {
             agent any
             stages {
@@ -57,6 +60,7 @@ pipeline {
                 }
             }
         }
+
         stage('VPS') {
             agent any
             steps {
@@ -73,11 +77,12 @@ pipeline {
             }
         }
     }
+
     post {
         always {
             mail to: 'aletromp00@gmail.com',
-            subject: "Pipeline IC: ${currentBuild.fullDisplayName}",
-            body: "${env.BUILD_URL} has result ${currentBuild.result}. Si ha tenido exito, se ha creado y subido la imagen ${IMAGEN}:${TAG}."
+                 subject: "Pipeline IC: ${currentBuild.fullDisplayName}",
+                 body: "${env.BUILD_URL} has result ${currentBuild.result}. Si ha tenido éxito, se ha creado y subido la imagen ${IMAGEN}:${TAG}."
         }
     }
 }
